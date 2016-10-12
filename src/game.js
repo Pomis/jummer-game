@@ -37,7 +37,7 @@ function main() {
         bunny = new PIXI.Sprite(resources.bunny.texture);
         bunny.zOrder = 111;
 
-        bunny.position.x = 400;
+        bunny.position.x = 100;
         bunny.position.y = 200;
 
         bunny.scale.x = 0.3;
