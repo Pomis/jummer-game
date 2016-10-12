@@ -5,9 +5,7 @@
     <title></title>
     <link href="style.css" rel="stylesheet" type="text/css">
 </head>
-<body onkeydown="keyPressed(event.keyCode)">
-<body onkeyup="keyUp(event.keyCode)">
-</body>
+<body onkeydown="keyDown(event.keyCode)" onkeyup="keyUp(event.keyCode)" onmousedown="touchDown()" onmouseup="touchUp()">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.0.0/pixi.min.js"></script>
 <script src="src/game.js"></script>
 <script src="src/touch.js"></script>

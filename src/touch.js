@@ -1,7 +1,4 @@
-/**
- * Created by romanismagilov on 11.10.16.
- */
-function keyPressed(keyCode) {
+function keyDown(keyCode) {
     if (keyCode == 37
         || keyCode == 65) {
         startMoveLeft();
@@ -12,5 +9,25 @@ function keyPressed(keyCode) {
 }
 
 function keyUp(keyCode) {
+    if (keyCode == 37
+        || keyCode == 65) {
+        stopMoveLeft();
+    } else if (keyCode == 39
+        || keyCode == 68) {
+        stopMoveRight();
+    }
+}
 
+function touchDown(){
+    if (pointer.x < window.innerWidth/2)
+        startMoveLeft();
+    else
+        startMoveRight();
+}
+
+function touchUp(){
+    if (pointer.x < window.innerWidth/2)
+        stopMoveLeft();
+    else
+        stopMoveRight();
 }
