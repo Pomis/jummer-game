@@ -50,10 +50,16 @@ function generateTouchListeners() {
     leftListener.on('mouseup', function () {
         stopMoveLeft();
     });
+    leftListener.on('touchstart', function () {
+        startMoveLeft();
+    });
+    leftListener.on('touchend', function () {
+        stopMoveLeft();
+    });
     stage.addChild(leftListener);
 
 
-    var rightListener = PIXI.Sprite.fromImage('empty1.png');
+    var rightListener = PIXI.Sprite.fromImage('empty.png');
 
     rightListener.position.x = window.innerWidth / 2;
     rightListener.position.y = 0;
@@ -67,6 +73,12 @@ function generateTouchListeners() {
         startMoveRight();
     });
     rightListener.on('mouseup', function () {
+        stopMoveRight();
+    });
+    rightListener.on('touchstart', function () {
+        startMoveRight();
+    });
+    rightListener.on('touchend', function () {
         stopMoveRight();
     });
     stage.addChild(rightListener);
