@@ -228,6 +228,9 @@ function lose() {
     loseScreen.on('click', function () {
         restart();
     });
+    loseScreen.on('touchend', function () {
+        restart();
+    });
     stage.addChild(loseScreen);
 
     var style = {
