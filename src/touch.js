@@ -53,7 +53,7 @@ function generateTouchListeners() {
     stage.addChild(leftListener);
 
 
-    var rightListener = PIXI.Sprite.fromImage('empty.png');
+    var rightListener = PIXI.Sprite.fromImage('empty1.png');
 
     rightListener.position.x = window.innerWidth / 2;
     rightListener.position.y = 0;
