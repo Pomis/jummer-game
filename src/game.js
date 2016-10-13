@@ -2,7 +2,7 @@ var renderer = new PIXI.WebGLRenderer(window.innerWidth, window.innerHeight);
 
 document.body.appendChild(renderer.view);
 
-var stage = new PIXI.Container();
+var stage = new PIXI.Stage(0x66FF99, true);
 var pointer = renderer.plugins.interaction.mouse.global;
 var START_SPEED = -15;
 var DIFFICULTY_FACTOR = 0.8;
@@ -19,40 +19,68 @@ var movables = [];
 var backgrounds = [];
 var obstacles = [];
 var bunny = null;
+var loseScreen = null;
 
+var lost = false;
 var moving = false;
+var animating = true;
 var speedx = 0;
 var speedy = START_SPEED;
 var acceleration = 0;
 var score = 0;
+var highscore = 0;
 var distance = 0;
 
 var richText;
+var resource;
 
+firstStart();
 
-main();
+function firstStart() {
+    PIXI.loader.add('bunny', 'cock.png').load(function (loader, resources) {
+        resource = resources;
+        main();
+    });
+}
 
 function main() {
-    PIXI.loader.add('bunny', 'cock.png').load(function (loader, resources) {
-        bunny = new PIXI.Sprite(resources.bunny.texture);
-        bunny.zOrder = 111;
-
-        bunny.position.x = 100;
-        bunny.position.y = 200;
-
-        bunny.scale.x = 0.3;
-        bunny.scale.y = 0.3;
-
-        stage.addChild(bunny);
-
-
-        generateStartObstacles(window.innerHeight);
-
-        initScore();
-        animate();
-    });
-
     background(-10000);
+    bunny = new PIXI.Sprite(resource.bunny.texture);
+
+    bunny.position.x = 100;
+    bunny.position.y = 200;
+
+    bunny.scale.x = 0.3;
+    bunny.scale.y = 0.3;
+
+    stage.addChild(bunny);
+
+
+    generateStartObstacles(window.innerHeight);
+    animating = true;
+    initScore();
+    generateTouchListeners();
+    animate();
+}
+
+function restart() {
+    stage.removeChild(loseScreen);
+    while(stage.children[0]) {
+        stage.removeChild(stage.children[0]);
+    }
+    renderer.render(stage);
+
+    movables = [];
+    backgrounds = [];
+    obstacles = [];
+    moving = false;
+    lost = false;
+    speedx = 0;
+    speedy = START_SPEED;
+    acceleration = 0;
+    score = 0;
+    distance = 0;
+    main();
 }
 
 function background(offset) {
@@ -80,7 +108,7 @@ function generateStartObstacles(offset) {
         bgPart.scale.x = window.innerWidth / SCREEN_RELATIVE_WIDTH;
         bgPart.scale.y = window.innerWidth / SCREEN_RELATIVE_WIDTH;
 
-        bgPart.position.x = (window.innerWidth - OBSTACLE_RELATIVE_WIDTH * bgPart.scale.x / 2)* Math.random();
+        bgPart.position.x = (window.innerWidth - OBSTACLE_RELATIVE_WIDTH * bgPart.scale.x / 2) * Math.random();
         bgPart.position.y = offset;
 
         stage.addChild(bgPart);
@@ -91,27 +119,30 @@ function generateStartObstacles(offset) {
 }
 
 function checkDistance() {
-    if (distance>600 * backgrounds[0].scale.y){
+    if (distance > 600 * backgrounds[0].scale.y) {
         distance = 0;
         convertBackground();
     }
 }
+
 function animate() {
-    requestAnimationFrame(animate);
+    if (animating) {
+        requestAnimationFrame(animate);
 
-    moveCharY();
-    moveObjects();
-    collide();
-    updateScore();
-    checkDistance();
-    checkLose();
+        moveCharY();
+        moveObjects();
+        collide();
+        updateScore();
+        checkDistance();
+        checkLose();
 
-    if (!moving) speedx *= DECCELERATION_FACTOR;
-    speedy += 0.3;
+        if (!moving) speedx *= DECCELERATION_FACTOR;
+        speedy += 0.3;
 
-    renderer.render(stage);
+        renderer.render(stage);
+    }
 }
-//bunny.rotation += 0.01;
+
 function moveCharY() {
     bunny.position.x += speedx;
     if (bunny.position.x <= 0)
@@ -120,34 +151,35 @@ function moveCharY() {
         bunny.position.x = (SCREEN_RELATIVE_WIDTH - CHAR_RELATIVE_WIDTH / 2) * window.innerWidth / SCREEN_RELATIVE_WIDTH;
 }
 
-function initScore(){
+function initScore() {
     var style = {
-        fontFamily : 'Arial',
-        fontSize : '36px',
-        fontStyle : 'italic',
-        fontWeight : 'bold',
-        fill : '#F7EDCA',
-        stroke : '#4a1850',
-        strokeThickness : 5,
-        dropShadow : true,
-        dropShadowColor : '#000000',
-        dropShadowAngle : Math.PI / 6,
-        dropShadowDistance : 6,
-        wordWrap : true,
-        wordWrapWidth : 440
+        fontFamily: 'Arial',
+        fontSize: '36px',
+        fontStyle: 'italic',
+        fontWeight: 'bold',
+        fill: '#F7EDCA',
+        stroke: '#4a1850',
+        strokeThickness: 5,
+        dropShadow: true,
+        dropShadowColor: '#000000',
+        dropShadowAngle: Math.PI / 6,
+        dropShadowDistance: 6,
+        wordWrap: true,
+        wordWrapWidth: 440
     };
 
-    richText = new PIXI.Text("0",style);
+    richText = new PIXI.Text("0", style);
     richText.x = 0;
-    richText.y = 7*window.innerHeight/8;
+    richText.y = 7 * window.innerHeight / 8;
     richText.text = "0";
 
     stage.addChild(richText);
 }
 
-function updateScore(){
+function updateScore() {
     richText.text = Math.floor(score);
 }
+
 function moveObjects() {
     var charYBuffer = 0;
     // Char
@@ -174,42 +206,58 @@ function moveObjects() {
 }
 
 function checkLose() {
-    if (bunny.position.y + 30 > window.innerHeight){
+    if (!lost && bunny.position.y + 30 > window.innerHeight) {
         lose();
     }
 }
 
 function lose() {
-    var bgPart = PIXI.Sprite.fromImage('bg1.png');
+    lost = true;
+    animating = false;
 
-    bgPart.position.x = 0;
-    bgPart.position.y = 0;
+    loseScreen = PIXI.Sprite.fromImage('bg1.png');
 
-    bgPart.scale.x = window.innerWidth / SCREEN_RELATIVE_WIDTH;
-    bgPart.scale.y = 1000 / window.innerHeight;
+    loseScreen.position.x = 0;
+    loseScreen.position.y = 0;
 
-    stage.addChild(bgPart);
+    loseScreen.scale.x = window.innerWidth / SCREEN_RELATIVE_WIDTH;
+    loseScreen.scale.y = window.innerHeight * backgrounds[0].scale.y / 200;
+
+
+    loseScreen.interactive = true;
+    loseScreen.on('click', function () {
+        restart();
+    });
+    stage.addChild(loseScreen);
 
     var style = {
-        fontFamily : 'Arial',
-        fontSize : '36px',
-        fontStyle : 'italic',
-        fontWeight : 'bold',
-        fill : '#F7EDCA',
-        stroke : '#4a1850',
-        strokeThickness : 5,
-        dropShadow : true,
-        dropShadowColor : '#000000',
-        dropShadowAngle : Math.PI / 6,
-        dropShadowDistance : 6,
-        wordWrap : true,
-        wordWrapWidth : 440
+        fontFamily: 'Arial',
+        fontSize: '36px',
+        fontStyle: 'italic',
+        fontWeight: 'bold',
+        fill: '#F7EDCA',
+        stroke: '#4a1850',
+        strokeThickness: 5,
+        dropShadow: true,
+        dropShadowColor: '#000000',
+        dropShadowAngle: Math.PI / 6,
+        dropShadowDistance: 6,
+        wordWrap: true,
+        wordWrapWidth: 440
     };
 
-    richText = new PIXI.Text("0",style);
-    richText.x = window.innerWidth/7;
-    richText.y = 5*window.innerHeight/8;
-    richText.text = "Your score:\n"+Math.floor(score);
+    richText = new PIXI.Text("", style);
+    richText.x = window.innerWidth / 7;
+    richText.y = 5 * window.innerHeight / 8;
+    if (score>highscore){
+        highscore = score;
+        richText.text = "New highscore!\n";
+        setScore(highscore);
+    } else {
+        richText.text = "Your score:\n";
+    }
+
+    richText.text += Math.floor(score) + "\nTap to restart";
 
     stage.addChild(richText);
 }
@@ -221,7 +269,6 @@ function collide() {
             if (closeTo(obstacles[i])) {
                 speedy = START_SPEED;
                 convertObstacle();
-                //convertBackground();
             }
         }
 }
@@ -237,7 +284,7 @@ function convertObstacle() {
     }
     donnestObstacle.scale.x *= 0.9;
     donnestObstacle.y = highestObstacle.y - window.innerHeight * DIFFICULTY_FACTOR * highestObstacle.scale.y;
-    donnestObstacle.position.x = (window.innerWidth - OBSTACLE_RELATIVE_WIDTH * donnestObstacle.scale.x)* Math.random();
+    donnestObstacle.position.x = (window.innerWidth - OBSTACLE_RELATIVE_WIDTH * donnestObstacle.scale.x) * Math.random();
 }
 
 function convertBackground() {
@@ -255,8 +302,8 @@ function convertBackground() {
 function closeTo(obstacle) {
     return obstacle.y - CHAR_RELATIVE_HEIGHT * bunny.scale.y / 2 > bunny.position.y
         && obstacle.y - CHAR_RELATIVE_HEIGHT * bunny.scale.y * 2 / 3 < bunny.position.y
-        && obstacle.position.x < bunny.position.x+ CHAR_RELATIVE_WIDTH*bunny.scale.x/2
-        && obstacle.position.x + OBSTACLE_RELATIVE_WIDTH * obstacle.scale.x > bunny.position.x + CHAR_RELATIVE_WIDTH*bunny.scale.x/2
+        && obstacle.position.x < bunny.position.x + CHAR_RELATIVE_WIDTH * bunny.scale.x / 2
+        && obstacle.position.x + OBSTACLE_RELATIVE_WIDTH * obstacle.scale.x > bunny.position.x + CHAR_RELATIVE_WIDTH * bunny.scale.x / 2
         ;
 }
 
