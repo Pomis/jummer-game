@@ -5,7 +5,7 @@ document.body.appendChild(renderer.view);
 var stage = new PIXI.Stage(0x66FF99, true);
 var pointer = renderer.plugins.interaction.mouse.global;
 var START_SPEED = -15;
-var DIFFICULTY_FACTOR = 0.8;
+var DIFFICULTY_FACTOR = 0.85;
 var SPEED_FACTOR = 3;
 var DECCELERATION_FACTOR = 0.95;
 
@@ -13,6 +13,7 @@ var OBSTACLE_RELATIVE_WIDTH = 500;
 var SCREEN_RELATIVE_WIDTH = 1000;
 var CHAR_RELATIVE_HEIGHT = 410;
 var CHAR_RELATIVE_WIDTH = 200;
+var OBSTACLE_SPEED = 1;
 
 
 var movables = [];
@@ -25,7 +26,7 @@ var lost = false;
 var moving = false;
 var animating = true;
 var speedx = 0;
-var speedy = START_SPEED;
+var speedy = 0;
 var acceleration = 0;
 var score = 0;
 var highscore = 0;
@@ -47,16 +48,15 @@ function main() {
     background(-10000);
     bunny = new PIXI.Sprite(resource.bunny.texture);
 
-    bunny.position.x = 100;
+
+    generateStartObstacles(window.innerHeight);
+    bunny.position.x = obstacles[obstacles.length-4].x+100;
     bunny.position.y = 200;
 
     bunny.scale.x = 0.3;
     bunny.scale.y = 0.3;
 
     stage.addChild(bunny);
-
-
-    generateStartObstacles(window.innerHeight);
     animating = true;
     initScore();
     generateTouchListeners();
@@ -76,7 +76,7 @@ function restart() {
     moving = false;
     lost = false;
     speedx = 0;
-    speedy = START_SPEED;
+    speedy = 0;
     acceleration = 0;
     score = 0;
     distance = 0;
@@ -108,6 +108,7 @@ function generateStartObstacles(offset) {
         bgPart.scale.x = window.innerWidth / SCREEN_RELATIVE_WIDTH;
         bgPart.scale.y = window.innerWidth / SCREEN_RELATIVE_WIDTH;
 
+        bgPart.movingLeft = Math.random() > 0.5;
         bgPart.position.x = (window.innerWidth - OBSTACLE_RELATIVE_WIDTH * bgPart.scale.x / 2) * Math.random();
         bgPart.position.y = offset;
 
@@ -135,6 +136,7 @@ function animate() {
         updateScore();
         checkDistance();
         checkLose();
+        moveObstacles();
 
         if (!moving) speedx *= DECCELERATION_FACTOR;
         speedy += 0.3;
@@ -149,6 +151,24 @@ function moveCharY() {
         bunny.position.x = 0;
     if (bunny.position.x >= (SCREEN_RELATIVE_WIDTH - CHAR_RELATIVE_WIDTH / 2) * window.innerWidth / SCREEN_RELATIVE_WIDTH)
         bunny.position.x = (SCREEN_RELATIVE_WIDTH - CHAR_RELATIVE_WIDTH / 2) * window.innerWidth / SCREEN_RELATIVE_WIDTH;
+}
+
+
+function moveObstacles() {
+    for (var i in obstacles){
+        if (obstacles[i].x<=0)
+            obstacles[i].movingLeft = false;
+        else if (obstacles[i].x>=(window.innerWidth - OBSTACLE_RELATIVE_WIDTH * obstacles[i].scale.x / 2))
+            obstacles[i].movingLeft = true;
+
+        if (obstacles[i].movingLeft){
+            obstacles[i].x --;
+        } else {
+            obstacles[i].x ++;
+        }
+
+
+    }
 }
 
 function initScore() {
@@ -171,9 +191,10 @@ function initScore() {
     richText = new PIXI.Text("0", style);
     richText.x = 0;
     richText.y = 7 * window.innerHeight / 8;
-    richText.text = "0";
 
     stage.addChild(richText);
+    richText.text = "O";
+
 }
 
 function updateScore() {
@@ -195,7 +216,7 @@ function moveObjects() {
         for (var i in movables) {
             movables[i].position.y += cameraSpeed;
         }
-        score += cameraSpeed;
+        score += cameraSpeed/100;
         distance += cameraSpeed;
         charYBuffer += cameraSpeed;
     }
