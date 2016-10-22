@@ -50,7 +50,7 @@ function main() {
 
 
     generateStartObstacles(window.innerHeight);
-    bunny.position.x = obstacles[obstacles.length-4].x+100;
+    bunny.position.x = obstacles[obstacles.length - 4].x + 100;
     bunny.position.y = 200;
 
     bunny.scale.x = 0.3;
@@ -65,7 +65,7 @@ function main() {
 
 function restart() {
     stage.removeChild(loseScreen);
-    while(stage.children[0]) {
+    while (stage.children[0]) {
         stage.removeChild(stage.children[0]);
     }
     renderer.render(stage);
@@ -155,20 +155,36 @@ function moveCharY() {
 
 
 function moveObstacles() {
-    for (var i in obstacles){
-        if (obstacles[i].x<=0)
+    for (var i in obstacles) {
+        if (obstacles[i].x <= 0 - OBSTACLE_RELATIVE_WIDTH * obstacles[i].scale.x / 2)
             obstacles[i].movingLeft = false;
-        else if (obstacles[i].x>=(window.innerWidth - OBSTACLE_RELATIVE_WIDTH * obstacles[i].scale.x / 2))
+        else if (obstacles[i].x >= (window.innerWidth - OBSTACLE_RELATIVE_WIDTH * obstacles[i].scale.x / 2))
             obstacles[i].movingLeft = true;
 
-        if (obstacles[i].movingLeft){
-            obstacles[i].x --;
+        if (obstacles[i].movingLeft) {
+            if (distanceToChar(obstacles[i]) < 150 && i%5 == 0){
+                obstacles[i].x-=3;
+            }
+            obstacles[i].x--;
         } else {
-            obstacles[i].x ++;
+            if (distanceToChar(obstacles[i]) < 150 && i%5 == 0){
+                obstacles[i].x+=3;
+            }
+            obstacles[i].x++;
         }
 
 
     }
+}
+
+function distanceToChar(someone) {
+    var distance = Math.sqrt(
+        (someone.position.x - bunny.position.x) * (someone.position.x - bunny.position.x) +
+        (someone.position.y - bunny.position.y) * (someone.position.y - bunny.position.y)
+    );
+
+    console.log(distance);
+    return distance;
 }
 
 function initScore() {
@@ -216,7 +232,7 @@ function moveObjects() {
         for (var i in movables) {
             movables[i].position.y += cameraSpeed;
         }
-        score += cameraSpeed/100;
+        score += cameraSpeed / 100;
         distance += cameraSpeed;
         charYBuffer += cameraSpeed;
     }
@@ -273,7 +289,7 @@ function lose() {
     richText = new PIXI.Text("", style);
     richText.x = window.innerWidth / 7;
     richText.y = 5 * window.innerHeight / 8;
-    if (score>highscore){
+    if (score > highscore) {
         highscore = score;
         richText.text = "New highscore!\n";
         setScore(highscore);
